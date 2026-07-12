@@ -1,0 +1,22 @@
+name: 资料纠错
+description: 报告课程攻略、模拟题、试卷或答案中的错误。
+title: "[纠错] "
+body:
+  - type: input
+    id: path
+    attributes:
+      label: 文件路径或链接
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: 问题说明
+    validations:
+      required: true
+  - type: textarea
+    id: correction
+    attributes:
+      label: 建议修改与依据
+    validations:
+      required: true

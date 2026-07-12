@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 安全与敏感信息报告
+    url: https://github.com/kaixin-aa/HENAU-icicles/security/policy
+    about: 凭据、敏感个人信息或现行考试材料请按安全政策私下报告。

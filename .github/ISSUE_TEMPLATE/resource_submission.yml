@@ -1,0 +1,43 @@
+name: 资源投稿建议
+description: 投稿课程攻略、原创练习或已经确认可以公开的资料。
+title: "[资源投稿] "
+body:
+  - type: input
+    id: course
+    attributes:
+      label: 课程名称
+    validations:
+      required: true
+  - type: dropdown
+    id: type
+    attributes:
+      label: 资料类型
+      options:
+        - 课程攻略或笔记
+        - 原创练习或模拟卷
+        - 历年试卷
+        - 答案或解析
+        - 其他
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: 来源、作者与许可
+      description: 不要公开粘贴含个人信息的授权证明。
+    validations:
+      required: true
+  - type: textarea
+    id: review
+    attributes:
+      label: 隐私、文件安全与考试状态检查
+      description: 若为真实试卷或答案，必须说明考核已经结束。
+    validations:
+      required: true
+  - type: checkboxes
+    id: declaration
+    attributes:
+      label: 投稿确认
+      options:
+        - label: 我有权公开该内容，且没有在 Issue 中附上未经审核文件、个人信息或凭据。
+          required: true

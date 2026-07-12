@@ -1,0 +1,29 @@
+name: 版权或隐私下架报告
+description: 报告未经授权内容、个人信息或不应公开的考试材料。
+title: "[下架] "
+body:
+  - type: dropdown
+    id: category
+    attributes:
+      label: 问题类型
+      options:
+        - 未经授权的版权内容
+        - 个人信息
+        - 现行考试或未公开题库
+        - 凭据或恶意文件
+        - 其他
+    validations:
+      required: true
+  - type: input
+    id: location
+    attributes:
+      label: 内容位置
+      description: 若公开路径会扩大风险，请改用安全政策中的私密报告方式。
+    validations:
+      required: true
+  - type: textarea
+    id: request
+    attributes:
+      label: 最少必要说明与处理请求
+    validations:
+      required: true
