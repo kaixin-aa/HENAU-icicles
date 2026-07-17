@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import hashlib
 import os
 import re
 import sys
@@ -22,9 +23,11 @@ REQUIRED_ROOT_FILES = (
     "README.md", "CONTRIBUTING.md", "CONTENT_POLICY.md", "LICENSE",
     "LICENSE-CODE", "LICENSE_SCOPE.md", "SECURITY.md", "THIRD_PARTY_NOTICES.md",
 )
-REQUIRED_COURSE_FILES = (
+LINEAR_ALGEBRA_FILES = (
     "README.md", "攻略/学习指南.md", "考试/模拟卷.md", "考试/学生解答.md",
 )
+DATA_STRUCTURE_FILES = ("README.md", "文件说明.md")
+DATA_STRUCTURE_DIRS = ("复习资料", "练习与答案", "考试")
 
 ROOT_IGNORED_DIRS = {".git", ".pytest_cache", "__pycache__", "_site", "reports"}
 CACHE_DIRS = {".mypy_cache", ".ruff_cache", "__pycache__"}
@@ -167,35 +170,81 @@ def _check_sensitive_text(path: Path, relative: Path, result: AuditResult) -> No
         result.add("absolute-local-path", relative, "absolute Windows path must not be published")
 
 
+def _check_linear_algebra(root: Path, result: AuditResult) -> None:
+    course_root = root / "线性代数"
+    for value in LINEAR_ALGEBRA_FILES:
+        path = course_root / Path(*value.split("/"))
+        if not path.is_file():
+            result.add("required-course-file", path.relative_to(root), "required course example is missing")
+    readme = course_root / "README.md"
+    text = readme.read_text(encoding="utf-8-sig") if readme.is_file() else ""
+    for target in ("攻略/学习指南.md", "考试/模拟卷.md", "考试/学生解答.md"):
+        if target not in text:
+            result.add("course-navigation", readme.relative_to(root), f"README must link to {target}")
+    paper = course_root / "考试" / "模拟卷.md"
+    paper_text = paper.read_text(encoding="utf-8-sig") if paper.is_file() else ""
+    if "项目结构演示，不是真实历年试卷" not in paper_text:
+        result.add("exam-disclaimer", paper.relative_to(root), "practice paper disclaimer is required")
+    solution = course_root / "考试" / "学生解答.md"
+    solution_text = solution.read_text(encoding="utf-8-sig") if solution.is_file() else ""
+    if "非标准答案，仅供复习核对" not in solution_text:
+        result.add("solution-disclaimer", solution.relative_to(root), "student solution disclaimer is required")
+
+
+def _check_data_structure(root: Path, result: AuditResult) -> None:
+    course_root = root / "数据结构"
+    for value in DATA_STRUCTURE_FILES:
+        path = course_root / value
+        if not path.is_file():
+            result.add("required-course-file", path.relative_to(root), "required data-structure file is missing")
+    for value in DATA_STRUCTURE_DIRS:
+        path = course_root / value
+        if not path.is_dir():
+            result.add("required-course-directory", path.relative_to(root), "required resource directory is missing")
+
+    readme = course_root / "README.md"
+    text = readme.read_text(encoding="utf-8-sig") if readme.is_file() else ""
+    for target in ("文件说明.md", "复习资料/", "练习与答案/", "考试/"):
+        if target not in text:
+            result.add("course-navigation", readme.relative_to(root), f"README must link to {target}")
+    if "非标准答案，仅供复习核对" not in text:
+        result.add("solution-disclaimer", readme.relative_to(root), "answer disclaimer is required")
+
+    description = course_root / "文件说明.md"
+    description_text = description.read_text(encoding="utf-8-sig") if description.is_file() else ""
+    if "资料来源于网络整理。" not in description_text:
+        result.add("source-description", description.relative_to(root), "required source description is missing")
+
+
 def _check_required_content(root: Path, result: AuditResult) -> None:
     for value in REQUIRED_ROOT_FILES:
-        path = root / value
-        if not path.is_file():
+        if not (root / value).is_file():
             result.add("required-file", value, "required root file is missing")
-
     readme = root / "README.md"
     root_text = readme.read_text(encoding="utf-8-sig") if readme.is_file() else ""
     for course in COURSES:
-        course_root = root / course
-        for value in REQUIRED_COURSE_FILES:
-            path = course_root / Path(*value.split("/"))
-            if not path.is_file():
-                result.add("required-course-file", path.relative_to(root), "required course example is missing")
         if f"./{course}/" not in root_text:
             result.add("course-navigation", "README.md", f"root README must link to {course}")
-        course_readme = course_root / "README.md"
-        course_text = course_readme.read_text(encoding="utf-8-sig") if course_readme.is_file() else ""
-        for target in ("攻略/学习指南.md", "考试/模拟卷.md", "考试/学生解答.md"):
-            if target not in course_text:
-                result.add("course-navigation", course_readme.relative_to(root), f"README must link to {target}")
-        paper = course_root / "考试" / "模拟卷.md"
-        paper_text = paper.read_text(encoding="utf-8-sig") if paper.is_file() else ""
-        if "项目结构演示，不是真实历年试卷" not in paper_text:
-            result.add("exam-disclaimer", paper.relative_to(root), "practice paper disclaimer is required")
-        solution = course_root / "考试" / "学生解答.md"
-        solution_text = solution.read_text(encoding="utf-8-sig") if solution.is_file() else ""
-        if "非标准答案，仅供复习核对" not in solution_text:
-            result.add("solution-disclaimer", solution.relative_to(root), "student solution disclaimer is required")
+    _check_linear_algebra(root, result)
+    _check_data_structure(root, result)
+
+
+def _check_duplicate_resources(root: Path, files: list[Path], result: AuditResult) -> None:
+    hashes: dict[str, Path] = {}
+    for path in files:
+        relative = path.relative_to(root)
+        if not relative.parts or relative.parts[0] not in COURSES or path.suffix.casefold() == ".md":
+            continue
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        previous = hashes.get(digest)
+        if previous is not None:
+            result.add(
+                "duplicate-resource",
+                relative,
+                f"same SHA-256 as {previous.relative_to(root).as_posix()}",
+            )
+        else:
+            hashes[digest] = path
 
 
 def audit_repository(
@@ -223,11 +272,15 @@ def audit_repository(
             result.add("file-too-large", relative, f"{size} bytes exceeds {max_file_size}")
         if len(relative_text) > max_path_length:
             result.add("path-too-long", relative, f"path length {len(relative_text)} exceeds {max_path_length}")
-        if path.suffix.casefold() in BANNED_EXTENSIONS:
+        suffix = path.suffix.casefold()
+        if suffix in BANNED_EXTENSIONS:
             result.add("banned-extension", relative, f"extension {path.suffix!r} is not allowed")
-        if path.suffix.casefold() == ".md":
+        if relative.parts and relative.parts[0] == "数据结构" and suffix in {".doc", ".docx"}:
+            result.add("data-structure-word-file", relative, "Word files must be converted to reviewed PDFs")
+        if suffix == ".md":
             _check_markdown_links(path, relative, root, result)
         _check_sensitive_text(path, relative, result)
+    _check_duplicate_resources(root, files, result)
     return result
 
 
