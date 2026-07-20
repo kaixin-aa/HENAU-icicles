@@ -11,7 +11,7 @@ def build_valid_repository(root: Path) -> None:
     for value in check_repo.REQUIRED_ROOT_FILES:
         (root / value).write_text("placeholder\n", encoding="utf-8")
     (root / "README.md").write_text(
-        "[线性代数](./线性代数/)\n[数据结构](./数据结构/)\n",
+        "[线性代数](./线性代数/)\n[数据结构](./数据结构/)\n[军事理论](./军事理论/)\n",
         encoding="utf-8",
     )
 
@@ -48,9 +48,27 @@ def build_valid_repository(root: Path) -> None:
     (data / "练习与答案" / "答案.txt").write_text("answer\n", encoding="utf-8")
     (data / "考试" / "试卷.pdf").write_bytes(b"exam-pdf")
 
+    military = root / "军事理论"
+    for directory in check_repo.MILITARY_THEORY_DIRS:
+        (military / directory).mkdir(parents=True, exist_ok=True)
+    (military / "README.md").write_text(
+        "[文件说明](./文件说明.md)\n"
+        "[题库](./练习与答案/军事理论题库（含答案）.pdf)\n"
+        "[旧试卷](./考试/2022-2023-1/试卷及学生作答（疫情）.pdf)\n"
+        "[新试卷](./考试/2025-2026-1/试卷-A.pdf)\n"
+        "非标准答案，仅供复习核对。部分内容具有时效性。\n",
+        encoding="utf-8",
+    )
+    (military / "文件说明.md").write_text("资料来源于网络整理。\n", encoding="utf-8")
+    (military / "练习与答案" / "军事理论题库（含答案）.pdf").write_bytes(b"military-bank")
+    (military / "考试" / "2022-2023-1").mkdir()
+    (military / "考试" / "2022-2023-1" / "试卷及学生作答（疫情）.pdf").write_bytes(b"military-old-exam")
+    (military / "考试" / "2025-2026-1").mkdir()
+    (military / "考试" / "2025-2026-1" / "试卷-A.pdf").write_bytes(b"military-new-exam")
+
 
 class RepositoryCheckTests(unittest.TestCase):
-    def test_valid_two_course_repository(self) -> None:
+    def test_valid_three_course_repository(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             build_valid_repository(root)
@@ -71,7 +89,19 @@ class RepositoryCheckTests(unittest.TestCase):
             build_valid_repository(root)
             (root / "数据结构" / "复习资料" / "讲义.docx").write_bytes(b"word")
             result = check_repo.audit_repository(root)
-            self.assertIn("data-structure-word-file", {issue.code for issue in result.issues})
+            self.assertIn("course-word-file", {issue.code for issue in result.issues})
+
+    def test_requires_military_theory_disclaimers(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            build_valid_repository(root)
+            readme = root / "军事理论" / "README.md"
+            readme.write_text("[文件说明](./文件说明.md)\n", encoding="utf-8")
+            result = check_repo.audit_repository(root)
+            codes = {issue.code for issue in result.issues}
+            self.assertIn("solution-disclaimer", codes)
+            self.assertIn("currency-disclaimer", codes)
+            self.assertIn("course-navigation", codes)
 
     def test_detects_duplicate_resource(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -107,14 +137,14 @@ class RepositoryCheckTests(unittest.TestCase):
             self.assertIn("possible-secret", codes)
             self.assertIn("broken-link", codes)
 
-    def test_root_readme_must_link_both_courses(self) -> None:
+    def test_root_readme_must_link_all_courses(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             build_valid_repository(root)
             (root / "README.md").write_text("没有课程入口。\n", encoding="utf-8")
             result = check_repo.audit_repository(root)
             self.assertEqual(
-                sum(issue.code == "course-navigation" for issue in result.issues), 2
+                sum(issue.code == "course-navigation" for issue in result.issues), 3
             )
 
 
