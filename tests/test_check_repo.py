@@ -11,7 +11,8 @@ def build_valid_repository(root: Path) -> None:
     for value in check_repo.REQUIRED_ROOT_FILES:
         (root / value).write_text("placeholder\n", encoding="utf-8")
     (root / "README.md").write_text(
-        "[线性代数](./线性代数/)\n[数据结构](./数据结构/)\n[军事理论](./军事理论/)\n",
+        "[线性代数](./线性代数/)\n[数据结构](./数据结构/)\n"
+        "[军事理论](./军事理论/)\n[中国近现代史纲要](./中国近现代史纲要/)\n",
         encoding="utf-8",
     )
 
@@ -66,9 +67,12 @@ def build_valid_repository(root: Path) -> None:
     (military / "考试" / "2025-2026-1").mkdir()
     (military / "考试" / "2025-2026-1" / "试卷-A.pdf").write_bytes(b"military-new-exam")
 
+    modern_history = root / "中国近现代史纲要"
+    modern_history.mkdir()
+
 
 class RepositoryCheckTests(unittest.TestCase):
-    def test_valid_three_course_repository(self) -> None:
+    def test_valid_repository(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             build_valid_repository(root)
@@ -144,7 +148,7 @@ class RepositoryCheckTests(unittest.TestCase):
             (root / "README.md").write_text("没有课程入口。\n", encoding="utf-8")
             result = check_repo.audit_repository(root)
             self.assertEqual(
-                sum(issue.code == "course-navigation" for issue in result.issues), 3
+                sum(issue.code == "course-navigation" for issue in result.issues), 4
             )
 
 

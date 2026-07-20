@@ -18,7 +18,7 @@ MAX_FILE_SIZE = 25 * 1024 * 1024
 MAX_PATH_LENGTH = 180
 MAX_TEXT_SCAN_SIZE = 2 * 1024 * 1024
 
-COURSES = ("线性代数", "数据结构", "军事理论")
+COURSES = ("线性代数", "数据结构", "军事理论", "中国近现代史纲要")
 REQUIRED_ROOT_FILES = (
     "README.md", "CONTRIBUTING.md", "CONTENT_POLICY.md", "LICENSE",
     "LICENSE-CODE", "LICENSE_SCOPE.md", "SECURITY.md", "THIRD_PARTY_NOTICES.md",
@@ -310,7 +310,7 @@ def audit_repository(
         suffix = path.suffix.casefold()
         if suffix in BANNED_EXTENSIONS:
             result.add("banned-extension", relative, f"extension {path.suffix!r} is not allowed")
-        if relative.parts and relative.parts[0] in {"数据结构", "军事理论"} and suffix in {".doc", ".docx"}:
+        if relative.parts and relative.parts[0] in COURSES and suffix in {".doc", ".docx"}:
             result.add("course-word-file", relative, "Word files must be converted to reviewed PDFs")
         if suffix == ".md":
             _check_markdown_links(path, relative, root, result)
