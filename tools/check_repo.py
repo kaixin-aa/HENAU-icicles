@@ -18,7 +18,7 @@ MAX_FILE_SIZE = 25 * 1024 * 1024
 MAX_PATH_LENGTH = 180
 MAX_TEXT_SCAN_SIZE = 2 * 1024 * 1024
 
-COURSES = ("线性代数", "数据结构")
+COURSES = ("线性代数", "数据结构", "军事理论")
 REQUIRED_ROOT_FILES = (
     "README.md", "CONTRIBUTING.md", "CONTENT_POLICY.md", "LICENSE",
     "LICENSE-CODE", "LICENSE_SCOPE.md", "SECURITY.md", "THIRD_PARTY_NOTICES.md",
@@ -28,6 +28,8 @@ LINEAR_ALGEBRA_FILES = (
 )
 DATA_STRUCTURE_FILES = ("README.md", "文件说明.md")
 DATA_STRUCTURE_DIRS = ("复习资料", "练习与答案", "考试")
+MILITARY_THEORY_FILES = ("README.md", "文件说明.md")
+MILITARY_THEORY_DIRS = ("练习与答案", "考试")
 
 ROOT_IGNORED_DIRS = {".git", ".pytest_cache", "__pycache__", "_site", "reports"}
 CACHE_DIRS = {".mypy_cache", ".ruff_cache", "__pycache__"}
@@ -216,6 +218,38 @@ def _check_data_structure(root: Path, result: AuditResult) -> None:
         result.add("source-description", description.relative_to(root), "required source description is missing")
 
 
+def _check_military_theory(root: Path, result: AuditResult) -> None:
+    course_root = root / "军事理论"
+    for value in MILITARY_THEORY_FILES:
+        path = course_root / value
+        if not path.is_file():
+            result.add("required-course-file", path.relative_to(root), "required military-theory file is missing")
+    for value in MILITARY_THEORY_DIRS:
+        path = course_root / value
+        if not path.is_dir():
+            result.add("required-course-directory", path.relative_to(root), "required resource directory is missing")
+
+    readme = course_root / "README.md"
+    text = readme.read_text(encoding="utf-8-sig") if readme.is_file() else ""
+    for target in (
+        "文件说明.md",
+        "练习与答案/军事理论题库（含答案）.pdf",
+        "考试/2022-2023-1/试卷及学生作答（疫情）.pdf",
+        "考试/2025-2026-1/试卷-A.pdf",
+    ):
+        if target not in text:
+            result.add("course-navigation", readme.relative_to(root), f"README must link to {target}")
+    if "非标准答案，仅供复习核对" not in text:
+        result.add("solution-disclaimer", readme.relative_to(root), "answer disclaimer is required")
+    if "时效性" not in text:
+        result.add("currency-disclaimer", readme.relative_to(root), "time-sensitive content disclaimer is required")
+
+    description = course_root / "文件说明.md"
+    description_text = description.read_text(encoding="utf-8-sig") if description.is_file() else ""
+    if "资料来源于网络整理。" not in description_text:
+        result.add("source-description", description.relative_to(root), "required source description is missing")
+
+
 def _check_required_content(root: Path, result: AuditResult) -> None:
     for value in REQUIRED_ROOT_FILES:
         if not (root / value).is_file():
@@ -227,6 +261,7 @@ def _check_required_content(root: Path, result: AuditResult) -> None:
             result.add("course-navigation", "README.md", f"root README must link to {course}")
     _check_linear_algebra(root, result)
     _check_data_structure(root, result)
+    _check_military_theory(root, result)
 
 
 def _check_duplicate_resources(root: Path, files: list[Path], result: AuditResult) -> None:
@@ -275,8 +310,8 @@ def audit_repository(
         suffix = path.suffix.casefold()
         if suffix in BANNED_EXTENSIONS:
             result.add("banned-extension", relative, f"extension {path.suffix!r} is not allowed")
-        if relative.parts and relative.parts[0] == "数据结构" and suffix in {".doc", ".docx"}:
-            result.add("data-structure-word-file", relative, "Word files must be converted to reviewed PDFs")
+        if relative.parts and relative.parts[0] in {"数据结构", "军事理论"} and suffix in {".doc", ".docx"}:
+            result.add("course-word-file", relative, "Word files must be converted to reviewed PDFs")
         if suffix == ".md":
             _check_markdown_links(path, relative, root, result)
         _check_sensitive_text(path, relative, result)
