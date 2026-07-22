@@ -23,9 +23,8 @@ REQUIRED_ROOT_FILES = (
     "README.md", "CONTRIBUTING.md", "CONTENT_POLICY.md", "LICENSE",
     "LICENSE-CODE", "LICENSE_SCOPE.md", "SECURITY.md", "THIRD_PARTY_NOTICES.md",
 )
-LINEAR_ALGEBRA_FILES = (
-    "README.md", "攻略/学习指南.md", "考试/模拟卷.md", "考试/学生解答.md",
-)
+LINEAR_ALGEBRA_FILES = ("README.md", "文件说明.md")
+LINEAR_ALGEBRA_DIRS = ("考试", "练习与题库", "知识点")
 DATA_STRUCTURE_FILES = ("README.md", "文件说明.md")
 DATA_STRUCTURE_DIRS = ("复习资料", "练习与答案", "考试")
 MILITARY_THEORY_FILES = ("README.md", "文件说明.md")
@@ -175,22 +174,25 @@ def _check_sensitive_text(path: Path, relative: Path, result: AuditResult) -> No
 def _check_linear_algebra(root: Path, result: AuditResult) -> None:
     course_root = root / "线性代数"
     for value in LINEAR_ALGEBRA_FILES:
-        path = course_root / Path(*value.split("/"))
+        path = course_root / value
         if not path.is_file():
-            result.add("required-course-file", path.relative_to(root), "required course example is missing")
+            result.add("required-course-file", path.relative_to(root), "required linear-algebra file is missing")
+    for value in LINEAR_ALGEBRA_DIRS:
+        path = course_root / value
+        if not path.is_dir():
+            result.add("required-course-directory", path.relative_to(root), "required resource directory is missing")
     readme = course_root / "README.md"
     text = readme.read_text(encoding="utf-8-sig") if readme.is_file() else ""
-    for target in ("攻略/学习指南.md", "考试/模拟卷.md", "考试/学生解答.md"):
+    for target in ("文件说明.md", "考试/", "练习与题库/", "知识点/"):
         if target not in text:
             result.add("course-navigation", readme.relative_to(root), f"README must link to {target}")
-    paper = course_root / "考试" / "模拟卷.md"
-    paper_text = paper.read_text(encoding="utf-8-sig") if paper.is_file() else ""
-    if "项目结构演示，不是真实历年试卷" not in paper_text:
-        result.add("exam-disclaimer", paper.relative_to(root), "practice paper disclaimer is required")
-    solution = course_root / "考试" / "学生解答.md"
-    solution_text = solution.read_text(encoding="utf-8-sig") if solution.is_file() else ""
-    if "非标准答案，仅供复习核对" not in solution_text:
-        result.add("solution-disclaimer", solution.relative_to(root), "student solution disclaimer is required")
+    if "非标准答案，仅供复习核对" not in text:
+        result.add("solution-disclaimer", readme.relative_to(root), "answer disclaimer is required")
+
+    description = course_root / "文件说明.md"
+    description_text = description.read_text(encoding="utf-8-sig") if description.is_file() else ""
+    if "资料来源于课程资料整理和网络公开资料汇总" not in description_text:
+        result.add("source-description", description.relative_to(root), "required source description is missing")
 
 
 def _check_data_structure(root: Path, result: AuditResult) -> None:

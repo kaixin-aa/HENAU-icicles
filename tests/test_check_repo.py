@@ -17,21 +17,20 @@ def build_valid_repository(root: Path) -> None:
     )
 
     linear = root / "线性代数"
-    (linear / "攻略").mkdir(parents=True)
-    (linear / "考试").mkdir()
+    for directory in check_repo.LINEAR_ALGEBRA_DIRS:
+        (linear / directory).mkdir(parents=True, exist_ok=True)
     (linear / "README.md").write_text(
-        "[指南](./攻略/学习指南.md)\n"
-        "[试卷](./考试/模拟卷.md)\n"
-        "[解答](./考试/学生解答.md)\n",
+        "[文件说明](./文件说明.md)\n"
+        "[考试](./考试/)\n"
+        "[练习与题库](./练习与题库/)\n"
+        "[知识点](./知识点/)\n"
+        "非标准答案，仅供复习核对。\n",
         encoding="utf-8",
     )
-    (linear / "攻略" / "学习指南.md").write_text("原创指南\n", encoding="utf-8")
-    (linear / "考试" / "模拟卷.md").write_text(
-        "项目结构演示，不是真实历年试卷。\n", encoding="utf-8"
-    )
-    (linear / "考试" / "学生解答.md").write_text(
-        "非标准答案，仅供复习核对。\n", encoding="utf-8"
-    )
+    (linear / "文件说明.md").write_text("资料来源于课程资料整理和网络公开资料汇总。\n", encoding="utf-8")
+    (linear / "考试" / "试卷.pdf").write_bytes(b"linear-exam-pdf")
+    (linear / "练习与题库" / "练习.pdf").write_bytes(b"linear-practice-pdf")
+    (linear / "知识点" / "知识点.png").write_bytes(b"linear-note-png")
 
     data = root / "数据结构"
     for directory in check_repo.DATA_STRUCTURE_DIRS:
@@ -129,7 +128,7 @@ class RepositoryCheckTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             build_valid_repository(root)
-            guide = root / "线性代数" / "攻略" / "学习指南.md"
+            guide = root / "线性代数" / "文件说明.md"
             guide.write_text(
                 "[missing](./不存在.md)\nphone 13800138000\napi_key = super-secret-value\n",
                 encoding="utf-8",
