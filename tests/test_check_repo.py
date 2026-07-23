@@ -11,7 +11,8 @@ def build_valid_repository(root: Path) -> None:
     for value in check_repo.REQUIRED_ROOT_FILES:
         (root / value).write_text("placeholder\n", encoding="utf-8")
     (root / "README.md").write_text(
-        "[大学英语](./大学英语/)\n[线性代数](./线性代数/)\n[数据结构](./数据结构/)\n"
+        "[大学英语](./大学英语/)\n[大学生心理健康教育](./大学生心理健康教育/)\n"
+        "[线性代数](./线性代数/)\n[数据结构](./数据结构/)\n"
         "[军事理论](./军事理论/)\n[中国近现代史纲要](./中国近现代史纲要/)\n",
         encoding="utf-8",
     )
@@ -32,6 +33,21 @@ def build_valid_repository(root: Path) -> None:
     )
     (english / "考试" / "试卷.pdf").write_bytes(b"english-exam-pdf")
     (english / "练习与题库" / "练习.pdf").write_bytes(b"english-practice-pdf")
+
+    mental_health = root / "大学生心理健康教育"
+    for directory in check_repo.MENTAL_HEALTH_DIRS:
+        (mental_health / directory).mkdir(parents=True, exist_ok=True)
+    (mental_health / "README.md").write_text(
+        "[文件说明](./文件说明.md)\n"
+        "[考试](./考试/)\n"
+        "非标准答案，仅供复习核对。\n",
+        encoding="utf-8",
+    )
+    (mental_health / "文件说明.md").write_text(
+        "资料来源于课程资料整理和网络公开资料汇总。\n",
+        encoding="utf-8",
+    )
+    (mental_health / "考试" / "试卷.pdf").write_bytes(b"mental-health-exam-pdf")
 
     linear = root / "线性代数"
     for directory in check_repo.LINEAR_ALGEBRA_DIRS:
@@ -164,7 +180,7 @@ class RepositoryCheckTests(unittest.TestCase):
             (root / "README.md").write_text("没有课程入口。\n", encoding="utf-8")
             result = check_repo.audit_repository(root)
             self.assertEqual(
-                sum(issue.code == "course-navigation" for issue in result.issues), 5
+                sum(issue.code == "course-navigation" for issue in result.issues), 6
             )
 
 
