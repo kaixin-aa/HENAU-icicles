@@ -11,10 +11,27 @@ def build_valid_repository(root: Path) -> None:
     for value in check_repo.REQUIRED_ROOT_FILES:
         (root / value).write_text("placeholder\n", encoding="utf-8")
     (root / "README.md").write_text(
-        "[线性代数](./线性代数/)\n[数据结构](./数据结构/)\n"
+        "[大学英语](./大学英语/)\n[线性代数](./线性代数/)\n[数据结构](./数据结构/)\n"
         "[军事理论](./军事理论/)\n[中国近现代史纲要](./中国近现代史纲要/)\n",
         encoding="utf-8",
     )
+
+    english = root / "大学英语"
+    for directory in check_repo.COLLEGE_ENGLISH_DIRS:
+        (english / directory).mkdir(parents=True, exist_ok=True)
+    (english / "README.md").write_text(
+        "[文件说明](./文件说明.md)\n"
+        "[考试](./考试/)\n"
+        "[练习与题库](./练习与题库/)\n"
+        "非标准答案，仅供复习核对。\n",
+        encoding="utf-8",
+    )
+    (english / "文件说明.md").write_text(
+        "资料来源于课程资料整理和网络公开资料汇总。代刷工具未收录。\n",
+        encoding="utf-8",
+    )
+    (english / "考试" / "试卷.pdf").write_bytes(b"english-exam-pdf")
+    (english / "练习与题库" / "练习.pdf").write_bytes(b"english-practice-pdf")
 
     linear = root / "线性代数"
     for directory in check_repo.LINEAR_ALGEBRA_DIRS:
@@ -147,7 +164,7 @@ class RepositoryCheckTests(unittest.TestCase):
             (root / "README.md").write_text("没有课程入口。\n", encoding="utf-8")
             result = check_repo.audit_repository(root)
             self.assertEqual(
-                sum(issue.code == "course-navigation" for issue in result.issues), 4
+                sum(issue.code == "course-navigation" for issue in result.issues), 5
             )
 
 
