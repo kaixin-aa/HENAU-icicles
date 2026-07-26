@@ -12,7 +12,7 @@ def build_valid_repository(root: Path) -> None:
         (root / value).write_text("placeholder\n", encoding="utf-8")
     (root / "README.md").write_text(
         "[大学英语](./大学英语/)\n[大学生心理健康教育](./大学生心理健康教育/)\n"
-        "[线性代数](./线性代数/)\n[数据结构](./数据结构/)\n"
+        "[计算机导论](./计算机导论/)\n[线性代数](./线性代数/)\n[数据结构](./数据结构/)\n"
         "[军事理论](./军事理论/)\n[中国近现代史纲要](./中国近现代史纲要/)\n",
         encoding="utf-8",
     )
@@ -48,6 +48,23 @@ def build_valid_repository(root: Path) -> None:
         encoding="utf-8",
     )
     (mental_health / "考试" / "试卷.pdf").write_bytes(b"mental-health-exam-pdf")
+
+    computer_intro = root / "计算机导论"
+    for directory in check_repo.COMPUTER_INTRODUCTION_DIRS:
+        (computer_intro / directory).mkdir(parents=True, exist_ok=True)
+    (computer_intro / "README.md").write_text(
+        "[文件说明](./文件说明.md)\n"
+        "[复习资料](./复习资料/)\n"
+        "[练习与答案](./练习与答案/)\n"
+        "暂未收录往年试卷。非标准答案，仅供复习核对。\n",
+        encoding="utf-8",
+    )
+    (computer_intro / "文件说明.md").write_text(
+        "资料来源于课程资料整理和网络公开资料汇总。没有往年试卷。\n",
+        encoding="utf-8",
+    )
+    (computer_intro / "复习资料" / "复习.pdf").write_bytes(b"computer-review-pdf")
+    (computer_intro / "练习与答案" / "答案.pdf").write_bytes(b"computer-answer-pdf")
 
     linear = root / "线性代数"
     for directory in check_repo.LINEAR_ALGEBRA_DIRS:
@@ -180,7 +197,7 @@ class RepositoryCheckTests(unittest.TestCase):
             (root / "README.md").write_text("没有课程入口。\n", encoding="utf-8")
             result = check_repo.audit_repository(root)
             self.assertEqual(
-                sum(issue.code == "course-navigation" for issue in result.issues), 6
+                sum(issue.code == "course-navigation" for issue in result.issues), 7
             )
 
 
