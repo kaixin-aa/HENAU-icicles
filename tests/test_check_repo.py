@@ -54,8 +54,8 @@ def build_valid_repository(root: Path) -> None:
         (computer_intro / directory).mkdir(parents=True, exist_ok=True)
     (computer_intro / "README.md").write_text(
         "[文件说明](./文件说明.md)\n"
-        "[复习资料](./复习资料/)\n"
-        "[练习与答案](./练习与答案/)\n"
+        "[复习题目](./复习题目/)\n"
+        "[头歌答案](./头歌答案/)\n"
         "暂未收录往年试卷。非标准答案，仅供复习核对。\n",
         encoding="utf-8",
     )
@@ -63,8 +63,8 @@ def build_valid_repository(root: Path) -> None:
         "资料来源于课程资料整理和网络公开资料汇总。没有往年试卷。\n",
         encoding="utf-8",
     )
-    (computer_intro / "复习资料" / "复习.pdf").write_bytes(b"computer-review-pdf")
-    (computer_intro / "练习与答案" / "答案.pdf").write_bytes(b"computer-answer-pdf")
+    (computer_intro / "复习题目" / "复习.pdf").write_bytes(b"computer-review-pdf")
+    (computer_intro / "头歌答案" / "答案.pdf").write_bytes(b"computer-answer-pdf")
 
     linear = root / "线性代数"
     for directory in check_repo.LINEAR_ALGEBRA_DIRS:

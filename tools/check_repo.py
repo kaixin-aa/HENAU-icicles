@@ -30,7 +30,7 @@ COLLEGE_ENGLISH_DIRS = ("考试", "练习与题库")
 MENTAL_HEALTH_FILES = ("README.md", "文件说明.md")
 MENTAL_HEALTH_DIRS = ("考试",)
 COMPUTER_INTRODUCTION_FILES = ("README.md", "文件说明.md")
-COMPUTER_INTRODUCTION_DIRS = ("复习资料", "练习与答案")
+COMPUTER_INTRODUCTION_DIRS = ("复习题目", "头歌答案")
 DATA_STRUCTURE_FILES = ("README.md", "文件说明.md")
 DATA_STRUCTURE_DIRS = ("复习资料", "练习与答案", "考试")
 MILITARY_THEORY_FILES = ("README.md", "文件说明.md")
@@ -266,7 +266,7 @@ def _check_computer_introduction(root: Path, result: AuditResult) -> None:
 
     readme = course_root / "README.md"
     text = readme.read_text(encoding="utf-8-sig") if readme.is_file() else ""
-    for target in ("文件说明.md", "复习资料/", "练习与答案/"):
+    for target in ("文件说明.md", "复习题目/", "头歌答案/"):
         if target not in text:
             result.add("course-navigation", readme.relative_to(root), f"README must link to {target}")
     if "非标准答案，仅供复习核对" not in text:
