@@ -18,7 +18,7 @@ MAX_FILE_SIZE = 25 * 1024 * 1024
 MAX_PATH_LENGTH = 180
 MAX_TEXT_SCAN_SIZE = 2 * 1024 * 1024
 
-COURSES = ("大学英语", "大学生心理健康教育", "计算机导论", "线性代数", "数据结构", "军事理论", "中国近现代史纲要")
+COURSES = ("大学英语", "大学生心理健康教育", "大学生国家安全教育", "计算机导论", "线性代数", "数据结构", "军事理论", "中国近现代史纲要")
 REQUIRED_ROOT_FILES = (
     "README.md", "CONTRIBUTING.md", "CONTENT_POLICY.md", "LICENSE",
     "LICENSE-CODE", "LICENSE_SCOPE.md", "SECURITY.md", "THIRD_PARTY_NOTICES.md",
@@ -29,6 +29,8 @@ COLLEGE_ENGLISH_FILES = ("README.md", "文件说明.md")
 COLLEGE_ENGLISH_DIRS = ("考试", "练习与题库")
 MENTAL_HEALTH_FILES = ("README.md", "文件说明.md")
 MENTAL_HEALTH_DIRS = ("考试",)
+NATIONAL_SECURITY_FILES = ("README.md", "文件说明.md")
+NATIONAL_SECURITY_DIRS = ("考试",)
 COMPUTER_INTRODUCTION_FILES = ("README.md", "文件说明.md")
 COMPUTER_INTRODUCTION_DIRS = ("复习题目", "头歌答案")
 DATA_STRUCTURE_FILES = ("README.md", "文件说明.md")
@@ -253,6 +255,31 @@ def _check_mental_health(root: Path, result: AuditResult) -> None:
         result.add("source-description", description.relative_to(root), "required source description is missing")
 
 
+def _check_national_security(root: Path, result: AuditResult) -> None:
+    course_root = root / "大学生国家安全教育"
+    for value in NATIONAL_SECURITY_FILES:
+        path = course_root / value
+        if not path.is_file():
+            result.add("required-course-file", path.relative_to(root), "required national-security file is missing")
+    for value in NATIONAL_SECURITY_DIRS:
+        path = course_root / value
+        if not path.is_dir():
+            result.add("required-course-directory", path.relative_to(root), "required resource directory is missing")
+
+    readme = course_root / "README.md"
+    text = readme.read_text(encoding="utf-8-sig") if readme.is_file() else ""
+    for target in ("文件说明.md", "考试/"):
+        if target not in text:
+            result.add("course-navigation", readme.relative_to(root), f"README must link to {target}")
+    if "非标准答案，仅供复习核对" not in text:
+        result.add("solution-disclaimer", readme.relative_to(root), "answer disclaimer is required")
+
+    description = course_root / "文件说明.md"
+    description_text = description.read_text(encoding="utf-8-sig") if description.is_file() else ""
+    if "资料来源于课程资料整理和网络公开资料汇总" not in description_text:
+        result.add("source-description", description.relative_to(root), "required source description is missing")
+
+
 def _check_computer_introduction(root: Path, result: AuditResult) -> None:
     course_root = root / "计算机导论"
     for value in COMPUTER_INTRODUCTION_FILES:
@@ -350,6 +377,7 @@ def _check_required_content(root: Path, result: AuditResult) -> None:
             result.add("course-navigation", "README.md", f"root README must link to {course}")
     _check_college_english(root, result)
     _check_mental_health(root, result)
+    _check_national_security(root, result)
     _check_computer_introduction(root, result)
     _check_linear_algebra(root, result)
     _check_data_structure(root, result)
